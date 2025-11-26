@@ -9,7 +9,7 @@
   btn.style.right = "20px";
   btn.style.zIndex = 999999;
   btn.style.padding = "10px 16px";
-  btn.style.background = "#ff4444";
+  btn.style.background = "#ffffff";
   btn.style.color = "white";
   btn.style.border = "none";
   btn.style.borderRadius = "8px";
