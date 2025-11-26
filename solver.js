@@ -191,7 +191,7 @@
     }
 
     console.log("🎉 Solve xong!");
-    alert("✔ DONE!");
+    // alert("✔ DONE!");
   }
 
 
