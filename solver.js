@@ -198,7 +198,7 @@
   // ======================= KIỂM TRA REMOTE KEY =========================
   async function checkRemoteKey() {
     try {
-      const res = await fetch("https://raw.githubusercontent.com/PhucPhamXuan/server/refs/heads/main/code.txt";
+      const res = await fetch("https://raw.githubusercontent.com/PhucPhamXuan/server/refs/heads/main/code.txt");
       const text = (await res.text()).trim();
       console.log("Key server:", text);
 
