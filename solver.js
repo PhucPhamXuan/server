@@ -10,14 +10,13 @@
   btn.style.zIndex = 999999;
   btn.style.padding = "10px 16px";
   btn.style.background = "#ffffff";
-  btn.style.color = "white";
+  btn.style.color = "#333";
   btn.style.border = "none";
   btn.style.borderRadius = "8px";
   btn.style.fontSize = "16px";
   btn.style.cursor = "pointer";
   btn.style.boxShadow = "0 3px 10px rgba(0,0,0,0.3)";
   document.body.appendChild(btn);
-
 
   // =============== Extract JSON items ==================
   function extractItems() {
@@ -80,28 +79,32 @@
     return null;
   }
 
-
   // =============== AUTO FILL ==================
   async function autoFill(items) {
     console.log("🚀 Bắt đầu solve", items.length, "câu");
 
     const delay = ms => new Promise(r => setTimeout(r, ms));
-    const blocks = [...document.querySelectorAll('li.item-block')];
+    const blocks = [...document.querySelectorAll('li.item-block, li[id^="question"]')];
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
+      const questionId = item._id || item.defaultQuestionId || item.id;
 
+      // Tìm block câu hỏi
       const block = blocks.find(b => {
         const dataId = b.getAttribute('data-id') || b.id || "";
-        return dataId.includes(item.defaultQuestionId || item.id || item._id);
+        return dataId.includes(questionId) || b.id === `question${questionId}`;
       }) || blocks[i];
 
-      if (!block) continue;
+      if (!block) {
+        console.warn(`⚠️ Không tìm thấy block câu ${i + 1}`);
+        continue;
+      }
 
       const type = item.elementType || item.type || "";
 
-      // -------------------------- CHOICE --------------------------
-      if (type === 'Choice') {
+      // -------------------------- CHOICE (Radio/Checkbox) --------------------------
+      if (type === 'Choice' || !type) {
         if (Array.isArray(item.choices)) {
           for (const c of item.choices) {
             if (String(c.point) === '1') {
@@ -110,7 +113,43 @@
                 input.checked = true;
                 input.dispatchEvent(new Event('change', { bubbles: true }));
                 input.dispatchEvent(new Event('click', { bubbles: true }));
+
+                // Thêm class active cho K12 PDF style
+                const label = input.closest('label');
+                if (label) {
+                  block.querySelectorAll('.choices-text').forEach(span => {
+                    span.classList.remove('active');
+                  });
+                  const choiceText = label.querySelector('.choices-text');
+                  if (choiceText) choiceText.classList.add('active');
+                }
+
+                block.classList.add('isChange');
+                console.log(`✔️ Câu ${i + 1}: Chọn đáp án ${c.answerTitle || c.answerCode}`);
               }
+            }
+          }
+        } else if (typeof item.choices === 'object') {
+          // Xử lý choices dạng object (K12 format)
+          const correctChoice = Object.values(item.choices).find(c => c.point === "1");
+          if (correctChoice) {
+            const radio = block.querySelector(`input[type="radio"][value="${correctChoice.answerCode}"]`);
+            if (radio) {
+              radio.checked = true;
+              radio.dispatchEvent(new Event('change', { bubbles: true }));
+              radio.dispatchEvent(new Event('click', { bubbles: true }));
+
+              const label = radio.closest('label');
+              if (label) {
+                block.querySelectorAll('.choices-text').forEach(span => {
+                  span.classList.remove('active');
+                });
+                const choiceText = label.querySelector('.choices-text');
+                if (choiceText) choiceText.classList.add('active');
+              }
+
+              block.classList.add('isChange');
+              console.log(`✔️ Câu ${i + 1}: Chọn đáp án ${correctChoice.answerTitle}`);
             }
           }
         }
@@ -191,9 +230,7 @@
     }
 
     console.log("🎉 Solve xong!");
-    // alert("✔ DONE!");
   }
-
 
   // ======================= KIỂM TRA REMOTE KEY =========================
   async function checkRemoteKey() {
@@ -209,7 +246,6 @@
     }
   }
 
-
   // =============== Khi BẤM NÚT thì mới chạy ==================
   btn.onclick = async () => {
     console.log("⏳ Kiểm tra quyền chạy solve...");
@@ -217,7 +253,7 @@
     const allowed = await checkRemoteKey();
 
     if (!allowed) {
-      alert("❌ Lỗi server");
+      alert("❌ Lỗi server hoặc không có quyền!");
       return;
     }
 
@@ -225,7 +261,7 @@
     const items = extractItems();
 
     if (!items) {
-      alert("Không load được");
+      alert("❌ Không load được items!");
       return;
     }
 
