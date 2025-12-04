@@ -3,7 +3,7 @@
 
   // =============== Tạo nút ==================
   const btn = document.createElement("button");
-  btn.innerText = "+";
+  btn.innerText = "v2";
   btn.style.position = "fixed";
   btn.style.bottom = "20px";
   btn.style.right = "20px";
